@@ -19,9 +19,17 @@ func Start() {
 	}
 	chat := &tb.User{ID: chatID}
 
+	poller := &tb.LongPoller{Timeout: 10 * time.Second}
+	logger := tb.NewMiddlewarePoller(poller, func(upd *tb.Update) bool {
+		if upd.Message != nil {
+			log.Printf("[%d] @%s: %s", upd.Message.Chat.ID, upd.Message.Sender.Username, upd.Message.Text)
+		}
+		return true
+	})
+
 	b, err := tb.NewBot(tb.Settings{
 		Token:  token,
-		Poller: &tb.LongPoller{Timeout: 10 * time.Second},
+		Poller: logger,
 	})
 
 	if err != nil {
@@ -29,18 +37,20 @@ func Start() {
 		return
 	}
 
+	say := func(msg string) {
+		log.Printf("[%d] @sawmillbot: %s", chat.ID, msg)
+		b.Send(chat, msg, tb.ModeMarkdown)
+	}
+
 	b.Handle(tb.OnAddedToGroup, func(m *tb.Message) {
-		b.Send(m.Chat, fmt.Sprintf("Hello, your chat ID is %d", m.Chat.ID))
+		say(fmt.Sprintf("Hello, your chat ID is %d", m.Chat.ID))
 	})
 
 	b.Handle("/start", func(m *tb.Message) {
-		b.Send(m.Chat, fmt.Sprintf("Hello, your chat ID is %d", m.Chat.ID))
+		say(fmt.Sprintf("Hello, your chat ID is %d", m.Chat.ID))
 	})
 
-	scheduleJobs(func(msg string) {
-		log.Printf(msg)
-		b.Send(chat, msg, tb.ModeMarkdown)
-	})
+	scheduleJobs(say)
 
 	log.Printf("Starting bot...")
 	b.Start()

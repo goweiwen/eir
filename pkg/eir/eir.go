@@ -50,7 +50,7 @@ func scheduleJobs(say func(string)) {
 	c := cron.New()
 
 	c.AddFunc(
-		"0 55 21 * * WED",
+		"0 55 21 * * TUE",
 		func() {
 			say(`*✨ House Cleaning*
 - Organize the fridge

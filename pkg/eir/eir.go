@@ -82,7 +82,7 @@ func scheduleJobs(say func(string)) {
 			_, week := now.ISOWeek()
 			isRecyclingWeek := week%2 == 0
 			if isRecyclingWeek {
-				say("*💩♻ Garbage & Recycling day!*")
+				say("*💩 Garbage & Recycling day!*")
 			} else {
 				say("*💩 Garbage day!*")
 			}
@@ -90,9 +90,9 @@ func scheduleJobs(say func(string)) {
 	)
 
 	c.AddFunc(
-		"0 0 7 25 * *",
+		"0 0 7 25,26,27 * *",
 		func() {
-			say("*🏠 Remember to pay the rent and utilities!")
+			say("*🏠 Remember to pay the rent and utilities!*")
 		},
 	)
 

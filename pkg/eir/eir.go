@@ -1,8 +1,11 @@
 package eir
 
 import (
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
@@ -42,6 +45,11 @@ func Start() {
 		b.Send(chat, msg, tb.ModeMarkdown)
 	}
 
+	error := func(msg string) {
+		log.Printf("[%d] ERROR: %s", chat.ID, msg)
+		b.Send(chat, fmt.Sprintf("ERROR: ```%s```", msg), tb.ModeMarkdown)
+	}
+
 	b.Handle(tb.OnAddedToGroup, func(m *tb.Message) {
 		say(fmt.Sprintf("Hello, your chat ID is %d", m.Chat.ID))
 	})
@@ -50,14 +58,35 @@ func Start() {
 		say(fmt.Sprintf("Hello, your chat ID is %d", m.Chat.ID))
 	})
 
-	scheduleJobs(say)
+	b.Handle("/weather", func(m *tb.Message) {
+		weather, err := fetchWeather()
+		if err != nil {
+			error(err.Error())
+			return
+		}
+		say(fmt.Sprintf("```\n%s\n```", weather))
+	})
+
+	scheduleJobs(say, error)
 
 	log.Printf("Starting bot...")
 	b.Start()
 }
 
-func scheduleJobs(say func(string)) {
+func scheduleJobs(say func(string), error func(string)) {
 	c := cron.New()
+
+	c.AddFunc(
+		"0 0 9 * * *",
+		func() {
+			weather, err := fetchWeather()
+			if err != nil {
+				error(err.Error())
+				return
+			}
+			say(fmt.Sprintf("Good morning!\n```\n%s\n```", weather))
+		},
+	)
 
 	c.AddFunc(
 		"0 55 21 * * TUE",
@@ -71,12 +100,13 @@ func scheduleJobs(say func(string)) {
 - Vacuum the living room
 - Sweep the backyard
 - Put shoes neatly
+- Take out the trash
 		`)
 		},
 	)
 
 	c.AddFunc(
-		"0 0 23 * * TUE",
+		"0 0 18 * * TUE",
 		func() {
 			now := time.Now()
 			_, week := now.ISOWeek()
@@ -98,4 +128,30 @@ func scheduleJobs(say func(string)) {
 
 	c.Start()
 	log.Printf("Scheduled jobs!")
+}
+
+func fetchWeather() (string, error) {
+	coordinates := os.Getenv("COORDINATES")
+
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://wttr.in/%s?m0QT", coordinates), nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Add("User-Agent", "curl")
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", errors.New("HTTP status not OK")
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return string(body), nil
 }

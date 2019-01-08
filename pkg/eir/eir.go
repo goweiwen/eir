@@ -51,11 +51,15 @@ func Start() {
 	}
 
 	b.Handle(tb.OnAddedToGroup, func(m *tb.Message) {
-		say(fmt.Sprintf("Hello, your chat ID is %d", m.Chat.ID))
+		msg := fmt.Sprintf("Hello, your chat ID is %d", m.Chat.ID)
+		log.Printf("[%d] @sawmillbot: %s", chat.ID, msg)
+		b.Send(m.Chat, msg)
 	})
 
 	b.Handle("/start", func(m *tb.Message) {
-		say(fmt.Sprintf("Hello, your chat ID is %d", m.Chat.ID))
+		msg := fmt.Sprintf("Hello, your chat ID is %d", m.Chat.ID)
+		log.Printf("[%d] @sawmillbot: %s", chat.ID, msg)
+		b.Send(m.Chat, msg)
 	})
 
 	b.Handle("/weather", func(m *tb.Message) {

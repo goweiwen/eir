@@ -71,6 +71,18 @@ func Start() {
 		say(fmt.Sprintf("```\n%s\n```", weather))
 	})
 
+	b.Handle("/suckmydick", func(m *tb.Message) {
+		pedo := os.Getenv("PEDO_TELEGRAM_USERNAME")
+		var msg string
+		if m.Sender.Username == pedo {
+			msg = "Cannot be found"
+		} else {
+			msg = fmt.Sprintf("@%s, please suck @%s's dick", pedo, m.Sender.Username)
+		}
+		log.Printf("[%d] @sawmillbot: %s", chat.ID, msg)
+		b.Send(m.Chat, msg)
+	})
+
 	scheduleJobs(say, error)
 
 	log.Printf("Starting bot...")

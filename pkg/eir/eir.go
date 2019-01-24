@@ -93,35 +93,6 @@ func scheduleJobs(say func(string), error func(string)) {
 	c := cron.New()
 
 	c.AddFunc(
-		"0 0 9 * * *",
-		func() {
-			weather, err := fetchWeather()
-			if err != nil {
-				error(err.Error())
-				return
-			}
-			say(fmt.Sprintf("Good morning!\n```\n%s\n```", weather))
-		},
-	)
-
-	c.AddFunc(
-		"0 55 21 * * TUE",
-		func() {
-			say(`*✨ House Cleaning*
-- Organize the fridge
-- Clean and wipe the sink
-- Wipe down the stove
-- Wipe the tables
-- Mop the kitchen floor
-- Vacuum the living room
-- Sweep the backyard
-- Put shoes neatly
-- Take out the trash
-		`)
-		},
-	)
-
-	c.AddFunc(
 		"0 0 18 * * WED",
 		func() {
 			now := time.Now()
@@ -132,13 +103,6 @@ func scheduleJobs(say func(string), error func(string)) {
 			} else {
 				say("*💩 Garbage day!*")
 			}
-		},
-	)
-
-	c.AddFunc(
-		"0 0 7 25,26,27 * *",
-		func() {
-			say("*🏠 Remember to pay the rent and utilities!*")
 		},
 	)
 

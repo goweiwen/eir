@@ -45,6 +45,11 @@ func Start() {
 		b.Send(chat, msg, tb.ModeMarkdown)
 	}
 
+	reply := func(chat *tb.Chat, msg string) {
+		log.Printf("[%d] @sawmillbot: %s", chat.ID, msg)
+		b.Send(chat, msg, tb.ModeMarkdown)
+	}
+
 	error := func(msg string) {
 		log.Printf("[%d] ERROR: %s", chat.ID, msg)
 		b.Send(chat, fmt.Sprintf("ERROR: ```%s```", msg), tb.ModeMarkdown)
@@ -53,13 +58,13 @@ func Start() {
 	b.Handle(tb.OnAddedToGroup, func(m *tb.Message) {
 		msg := fmt.Sprintf("Hello, your chat ID is %d", m.Chat.ID)
 		log.Printf("[%d] @sawmillbot: %s", chat.ID, msg)
-		b.Send(m.Chat, msg)
+		reply(m.Chat, msg)
 	})
 
 	b.Handle("/start", func(m *tb.Message) {
 		msg := fmt.Sprintf("Hello, your chat ID is %d", m.Chat.ID)
 		log.Printf("[%d] @sawmillbot: %s", chat.ID, msg)
-		b.Send(m.Chat, msg)
+		reply(m.Chat, msg)
 	})
 
 	b.Handle("/weather", func(m *tb.Message) {
@@ -68,7 +73,7 @@ func Start() {
 			error(err.Error())
 			return
 		}
-		say(fmt.Sprintf("```\n%s\n```", weather))
+		reply(m.Chat, fmt.Sprintf("```\n%s\n```", weather))
 	})
 
 	b.Handle("/suckmydick", func(m *tb.Message) {
@@ -80,7 +85,7 @@ func Start() {
 			msg = fmt.Sprintf("@%s, please suck @%s's dick", pedo, m.Sender.Username)
 		}
 		log.Printf("[%d] @sawmillbot: %s", chat.ID, msg)
-		b.Send(m.Chat, msg)
+		reply(m.Chat, msg)
 	})
 
 	scheduleJobs(say, error)

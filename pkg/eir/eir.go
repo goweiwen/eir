@@ -57,13 +57,13 @@ func Start() {
 
 	b.Handle(tb.OnAddedToGroup, func(m *tb.Message) {
 		msg := fmt.Sprintf("Hello, your chat ID is %d", m.Chat.ID)
-		log.Printf("[%d] @sawmillbot: %s", chat.ID, msg)
+		log.Printf("[%d] @sawmillbot: %s", m.Chat.ID, msg)
 		reply(m.Chat, msg)
 	})
 
 	b.Handle("/start", func(m *tb.Message) {
 		msg := fmt.Sprintf("Hello, your chat ID is %d", m.Chat.ID)
-		log.Printf("[%d] @sawmillbot: %s", chat.ID, msg)
+		log.Printf("[%d] @sawmillbot: %s", m.Chat.ID, msg)
 		reply(m.Chat, msg)
 	})
 
@@ -84,7 +84,7 @@ func Start() {
 		} else {
 			msg = fmt.Sprintf("@%s, please suck @%s's dick", pedo, m.Sender.Username)
 		}
-		log.Printf("[%d] @sawmillbot: %s", chat.ID, msg)
+		log.Printf("[%d] @sawmillbot: %s", m.Chat.ID, msg)
 		reply(m.Chat, msg)
 	})
 

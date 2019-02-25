@@ -98,7 +98,7 @@ func scheduleJobs(say func(string), error func(string)) {
 	c := cron.New()
 
 	c.AddFunc(
-		"0 0 18 * * WED",
+		"0 0 22 * * WED",
 		func() {
 			now := time.Now()
 			_, week := now.ISOWeek()

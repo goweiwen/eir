@@ -133,6 +133,13 @@ func scheduleJobs(say func(string), error func(string)) {
 		},
 	)
 
+	c.AddFunc(
+		"0 0 8 * * THU",
+		func() {
+			say("*💩 Bring in the trash!*")
+		},
+	)
+
 	c.Start()
 	log.Printf("Scheduled jobs!")
 }

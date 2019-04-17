@@ -14,6 +14,9 @@ import (
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
+var isGarageDoorOpen = false
+var garageDoorLastToggled = time.Now()
+
 func Start() {
 	token := os.Getenv("TELEGRAM_BOT_TOKEN")
 	chatID, err := strconv.Atoi(os.Getenv("TELEGRAM_BOT_CHAT_ID"))
@@ -34,19 +37,18 @@ func Start() {
 		Token:  token,
 		Poller: logger,
 	})
-
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
 	say := func(msg string) {
-		log.Printf("[%d] @sawmillbot: %s", chat.ID, msg)
+		log.Printf("[%d] @: %s", chat.ID, msg)
 		b.Send(chat, msg, tb.ModeMarkdown)
 	}
 
 	reply := func(chat *tb.Chat, msg string) {
-		log.Printf("[%d] @sawmillbot: %s", chat.ID, msg)
+		log.Printf("[%d] @: %s", chat.ID, msg)
 		b.Send(chat, msg, tb.ModeMarkdown)
 	}
 
@@ -57,20 +59,20 @@ func Start() {
 
 	b.Handle(tb.OnAddedToGroup, func(m *tb.Message) {
 		msg := fmt.Sprintf("Hello, your chat ID is %d", m.Chat.ID)
-		log.Printf("[%d] @sawmillbot: %s", m.Chat.ID, msg)
+		log.Printf("[%d] @: %s", m.Chat.ID, msg)
 		reply(m.Chat, msg)
 	})
 
 	b.Handle("/start", func(m *tb.Message) {
 		msg := fmt.Sprintf("Hello, your chat ID is %d", m.Chat.ID)
-		log.Printf("[%d] @sawmillbot: %s", m.Chat.ID, msg)
+		log.Printf("[%d] @: %s", m.Chat.ID, msg)
 		reply(m.Chat, msg)
 	})
 
 	b.Handle("/weather", func(m *tb.Message) {
 		weather, err := fetchWeather()
 		if err != nil {
-			error(err.Error())
+			log.Fatal(err)
 			return
 		}
 		reply(m.Chat, fmt.Sprintf("```\n%s\n```", weather))
@@ -84,7 +86,27 @@ func Start() {
 		} else {
 			msg = fmt.Sprintf("@%s, please suck @%s's dick", pedo, m.Sender.Username)
 		}
-		log.Printf("[%d] @sawmillbot: %s", m.Chat.ID, msg)
+		log.Printf("[%d] @: %s", m.Chat.ID, msg)
+		reply(m.Chat, msg)
+	})
+
+	b.Handle("/garagedoor", func(m *tb.Message) {
+		if time.Since(garageDoorLastToggled) < 13 * time.Second {
+			reply(m.Chat, "🚪 Please wait...")
+		}
+		garageDoorLastToggled = time.Now()
+		var msg string
+		isGarageDoorOpen, err := toggleGarageDoor()
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+		if isGarageDoorOpen {
+			msg = "🚪 Garage door opened!"
+		} else {
+			msg = "🚪 Garage door closed!"
+		}
+		log.Printf("[%d] @: %s", m.Chat.ID, msg)
 		reply(m.Chat, msg)
 	})
 
@@ -140,3 +162,31 @@ func fetchWeather() (string, error) {
 
 	return string(body), nil
 }
+
+func toggleGarageDoor() (bool, error) {
+	authToken := os.Getenv("BLYNK_AUTH_TOKEN")
+
+	log.Println(fmt.Sprintf("http://188.166.206.43/%s/update/V3?value=255", authToken))
+	resp, err := http.Get(fmt.Sprintf("http://188.166.206.43/%s/update/V3?value=255", authToken))
+	if err != nil {
+		return isGarageDoorOpen, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return isGarageDoorOpen, errors.New("HTTP status not OK")
+	}
+	time.Sleep(2 * time.Second)
+	isGarageDoorOpen = !isGarageDoorOpen
+
+	resp, err = http.Get(fmt.Sprintf("http://188.166.206.43/%s/update/V3?value=0", authToken))
+	if err != nil {
+		return isGarageDoorOpen, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return isGarageDoorOpen, errors.New("HTTP status not OK")
+	}
+
+	return isGarageDoorOpen, nil
+}
+

@@ -93,6 +93,7 @@ func Start() {
 	b.Handle("/garagedoor", func(m *tb.Message) {
 		if time.Since(garageDoorLastToggled) < 13 * time.Second {
 			reply(m.Chat, "🚪 Please wait...")
+			return
 		}
 		garageDoorLastToggled = time.Now()
 		var msg string
